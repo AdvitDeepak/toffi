@@ -1,0 +1,11 @@
+git pull https://github.com/AdvitDeepak/toffi.git
+
+git add .
+
+git status 
+
+git commit -m "INSERT_MESSAGE_HERE"
+
+git status
+
+git push https://github.com/AdvitDeepak/toffi.git master
