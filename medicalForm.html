@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>DEMO: Medical Exam</title>
+    <style>
+      body{
+        background-color: SkyBlue;
+
+      }
+      input.larger {
+      width: 60px;
+      height: 60px;
+      }
+      .button {
+        background-color: Navy;
+        border: Navy;
+        color: SkyBlue;
+        text-align: center;
+        font-size: 24px;
+      }
+      .button1 {width: 300px; height: 80px}
+
+    .row {
+      display: flex;
+    }
+    /* Create two equal columns that sits next to each other */
+    .column {
+      flex: 50%;
+      padding: 10px;
+    }
+  </style>
+  </head>
+  <body>
+    <body text="Navy">
+    <h1><font size = "30" face="verdana">This is Your Medical Exam!</font></h1>
+<div class="row">
+  <div class="column" style="background-color:SkyBlue">
+    <h2><font face="verdana" >What is your gender?</font></h2>
+    <form action="">
+      <input type="radio" class="larger" name="gender" value="male">
+      <label for="male"><font size="30" face="verdana">Male</font></label><br>
+      <input type="radio" class="larger" name="gender" value="female">
+      <label for="female"><font size="30" face="verdana">Female</font></label><br>
+      <input type="radio" class="larger" name="gender" value="other">
+      <label for="female"><font size="30" face="verdana">Other</font></label><br>
+    </form>
+    <!--<br>-->
+    <h2><font face="verdana">Please check all that apply:</font></h2>
+    <input type="checkbox" class="larger" name="pie">
+    <label for="vehicle1"><font size="30" face="verdana">I know how to bake a pie</font></label><br>
+    <input type="checkbox" class="larger" name="trees">
+    <label for="vehicle1"><font size="30" face="verdana">I like trees</font></label><br>
+    <input type="checkbox" class="larger" name="movie">
+    <label for="vehicle1"><font size="30" face="verdana">I watched TV yesterday</font></label><br>
+    <input type="checkbox" class="larger" name="bike">
+    <label for="vehicle1"><font size="30" face="verdana">I have a bike</font></label><br>
+      </div>
+  <div class="column" style="background-color:SkyBlue">
+    <h2><font face="verdana" >How are you feeling today?</font></h2>
+      <form action="">
+        <input type="radio" class="larger" name="gender" value="great">
+        <label for="great"><font size="30" face="verdana">Great!</font></label><br>
+        <input type="radio" class="larger" name="gender" value="good">
+        <label for="good"><font size="30" face="verdana">Pretty Good:)</font></label><br>
+        <input type="radio" class="larger" name="gender" value="fine">
+        <label for="fine"><font size="30" face="verdana">Fine...</font></label><br>
+        <input type="radio" class="larger" name="gender" value="horrible">
+        <label for="horrible"><font size="30" face="verdana">Horrible!</font></label><br>
+      </form>
+      <!--<br>-->
+      <h2><font face="verdana">If you liked this exam, check the box!</font></h2>
+      <input type="checkbox" class="larger" name="box"><br>
+      <br>
+      <a href="demosubmit.html"><button class="button button1">SUBMIT</button></a>
+        </div>
+
+  </body>
+</html>
