@@ -183,12 +183,6 @@ def pipeline(arr, backArrM, debug, ct):
     #print("we wanted to move")
 
     #print("x: " + str(x) + " y: " + str(y))
-    """
-    if (time.time() - start < globals.wait):
-        #print(str(time.time() - start))
-        time.sleep(globals.wait - (time.time() - start))
-        #print("we were too fast")
-    """
     return (int(x * globals.xM), int(y * globals.yM), z)
 
 def procPip(frames, mouseCoords, options):
@@ -213,65 +207,10 @@ def procPip(frames, mouseCoords, options):
                 lclCt = 0
                 if val is not None:
                     mouseCoords.put(val)
+                else:
+                    mouseCoords.put((-1,-1,-1))
                 #print("c: " + str(ct) + " we added coords" + str(val))
                 #print(mouseCoords.qsize())
             ct += 1
             lclCt += 1
             #continue
-    """
-    print(frames.qsize())
-    globals.initialize()
-    time.sleep(2)
-    print(frames.qsize())
-    backArr = getBackground(frames, options)
-
-    ct = 0
-    lclCt = 0
-    poolCt = 0
-
-    arrFrames = []
-    print("entering while loop")
-    while True:
-        print(frames.qsize())
-        start = time.time()
-        if (frames.qsize() == 0):
-            #print("uh oh, q size is 0")
-            continue
-
-        frame = frames.get(True,100)
-
-        if (lclCt == globals.sampleRate):
-            #arrFrames.append((frame, backArr, options.debug, ct))
-            #poolCt += 1
-            val = pipeline(frame, backArr, options.debug, ct)
-            if val is not None:
-                print("c: " + str(ct) + " we added coords" + str(val))
-                mouseCoords.put(val, True, 100)
-                print(mouseCoords.qsize())
-
-            lclCt = 0
-
-        if (poolCt == globals.poolRate):
-            print("Pooling")
-            p = Pool()
-            arrVal = p.map(pipeline,arrFrames)
-            p.close()
-            p.join()
-
-            for val in arrVal:
-                if val is not None:
-                    print("c: " + str(ct) + " we added coords" + str(val))
-                    mouseCoords.put(val, True, 100)
-                    print(mouseCoords.qsize())
-
-            lclCt = 0
-            poolCt = 0
-
-
-        ct += 1
-        lclCt += 1
-
-        time.sleep(1)
-        if (time.time() - start < globals.wait):
-            time.sleep(globals.wait - (time.time() - start))
-    """

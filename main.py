@@ -7,11 +7,6 @@
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
 # PARTICULAR PURPOSE.
 
-"""This sample shows how to shows how to capture image data.
-
-It uses Python's numpy and matplotlib to process and display the data.
-"""
-
 import argparse
 from roypy_utils import roypy
 import time
@@ -78,8 +73,9 @@ def main ():
     pPipeline = multiprocessing.Process(target=procPip, args=(frames,mouseCoords,options,))
     pMouse = multiprocessing.Process(target=smoothMove, args=(mouseCoords,options,))
 
-    pPipeline.start()
     pMouse.start()
+    pPipeline.start()
+
 
     # we will use this queue to synchronize the callback with the main
     # thread, as drawing should happen in the main thread
