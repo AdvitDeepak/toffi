@@ -40,7 +40,8 @@ def pipeline(arr, backArrM, debug, ct):
 
     start = time.time()
     arrM = arr.copy()
-    arrM = (255.0 / arr.max() * (arr - arr.min())).astype(np.uint8)
+    arrMax = arr.max()
+    arrM = (255.0 / arrMax * (arr - arr.min())).astype(np.uint8)
 
     if (debug):
         img = Image.fromarray(arrM)
@@ -57,25 +58,32 @@ def pipeline(arr, backArrM, debug, ct):
     avg = np.average(item)
     if (avg < 15 or avg > 240): return None
 
-    #print("We did everything before forLoop: ", (time.time() - start))
+    #print("     before forLoop: ", (time.time() - start))
     #curTime = time.time()
 
     itemM = np.zeros((171,224))
     #num255 = 0
 
-    for x in range(0, 170,2):
-        for y in range(0, 224,2):
+    for x in range(0, 170,3): #171
+        for y in range(0, 221,3): #224
             val = item[x][y]
             if (val >= 15 and val <= avg):
                 itemM[x][y] = 255
                 itemM[x][y+1] = 255
                 itemM[x+1][y] = 255
                 itemM[x+1][y+1] = 255
+
+                itemM[x][y+2] = 255
+                itemM[x+1][y+2] = 255
+                itemM[x+2][y+2] = 255
+                itemM[x+2][y+1] = 255
+                itemM[x+2][y] = 255
+
             #else:
             #    itemM[x][y] = 255
                 #num255 += 1
 
-    #print("We did the forLoop: ", (time.time() - curTime))
+    #print("     We did the forLoop: ", (time.time() - curTime))
     #curTime = time.time()
 
     #if (num255 < 300): return None
@@ -111,7 +119,7 @@ def pipeline(arr, backArrM, debug, ct):
     cv2.imwrite("images/04_justHull.BMP", bIm)
     im = cv2.imread("images/04_justHull.BMP", 0)
 
-    #print("We found contours: ", (time.time() - curTime))
+    #print("     found contours: ", (time.time() - curTime))
     #curTime = time.time()
     #print(" contours")
 
@@ -119,6 +127,8 @@ def pipeline(arr, backArrM, debug, ct):
     M = cv2.moments(maxContour)
     cX = int(M["m10"] / M["m00"])
     cY = int(M["m01"] / M["m00"])
+    cZ = round(arr[cY][cX], 3)
+    if abs(arrMax - cZ) < 0.1: return None
 
     corners = cv2.goodFeaturesToTrack(im,8,0.01,10)
     corners = np.int0(corners)
@@ -135,7 +145,7 @@ def pipeline(arr, backArrM, debug, ct):
         nIm = Image.fromarray(im)
         nIm.save("images/05_corners.BMP")
 
-    #print("We found corners: ", (time.time() - curTime))
+    #print("     found corners: ", (time.time() - curTime))
     #curTime = time.time()
 
     highestVal = -1000
@@ -159,7 +169,7 @@ def pipeline(arr, backArrM, debug, ct):
             highestVal = currCenterDist
             highestCorner = corner
 
-    #print("We found highest corner: ", (time.time() - curTime))
+    #print("     found highest corner: ", (time.time() - curTime))
     #curTime = time.time()
 
     if not gotCorner: return None
@@ -169,9 +179,18 @@ def pipeline(arr, backArrM, debug, ct):
     #print(" highest corner")
 
     x, y = highestCorner.ravel()
+    #print("x: " + str(x) + "y: " + str(y))
     z = round(arr[y][x], 3)
+    if (z <= 0.001):
+        z = round(arr[y+1][x], 3)
+        if (z <= 0.001):
+            z = round(arr[y-1][x], 3)
+            if (z <= 0.001):
+                z = round(arr[y][x+1], 3)
+                if (z <= 0.001):
+                    z = round(arr[y][x-1], 3)
 
-    #print(" fnd x,y,z")
+    #print("       found x,y,z: ", (time.time() - curTime))
     #if (arr.max() - z < 0.1): return None
 
     if (debug):
@@ -183,7 +202,7 @@ def pipeline(arr, backArrM, debug, ct):
     #print("we wanted to move")
 
     #print("x: " + str(x) + " y: " + str(y))
-    return (int(x * globals.xM), int(y * globals.yM), z)
+    return (int(x * globals.xM), int(y * globals.yM), z, int(cX * globals.xM), int(cY * globals.yM), cZ)
 
 def procPip(frames, mouseCoords, options):
     globals.initialize()
@@ -203,12 +222,14 @@ def procPip(frames, mouseCoords, options):
             break
         else:
             if (lclCt == globals.sampleRate):
+                #stTime = time.time()
                 val = pipeline(item, backArr, options.debug, ct)
+                #print("Pip time: ", (time.time() - stTime))
                 lclCt = 0
                 if val is not None:
                     mouseCoords.put(val)
                 else:
-                    mouseCoords.put((-1,-1,-1))
+                    mouseCoords.put((-1,-1,-1,-1, -1, -1))
                 #print("c: " + str(ct) + " we added coords" + str(val))
                 #print(mouseCoords.qsize())
             ct += 1
