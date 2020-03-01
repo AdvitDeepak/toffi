@@ -20,6 +20,8 @@ def initialize():
     dXMin = xM * 1
     dYMin = yM * 1
 
+    global smallDelta
+    smallDelta = 0.00001
 
     global clickTh
     clickTh = 0.55
@@ -49,7 +51,7 @@ def initialize():
     clickZThr = 0.04 # meters
 
     global clickZTimeThr
-    clickZTimeThr = 0.2 # seconds
+    clickZTimeThr = .3 # seconds
 
     # Any duration less than this is rounded to 0.0 to instantly move the mouse.
     pyautogui.MINIMUM_DURATION = 0.05  # Default: 0.1

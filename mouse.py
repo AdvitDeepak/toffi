@@ -38,7 +38,7 @@ def smoothMove(mouseCoords, options):
         except queue.Empty:
             # this will be thrown when the timeout is hit
             #break
-            print ("queue empty")
+            #print ("queue empty")
             continue
         else:
             # mouse
@@ -49,36 +49,35 @@ def smoothMove(mouseCoords, options):
                 lastMouseC = (cursorX, cursorY, lastMouseZ, cursorX, cursorY, centerMouseZ)
                 continue
 
-            print("Z: ", curMouseC[2])
-
-            if(curMouseC[2] == 0 or (backgroundZValue - curMouseC[2]) < globals.zNoiseThr ): # For black spots, skip
+            #print("Z: ", curMouseC[2])
+            # For black spots, or setecting far off back ground object, skip
+            if(curMouseC[2] == 0) or (curMouseC[2] > backgroundZValue) or ((backgroundZValue - curMouseC[2]) < globals.zNoiseThr):
                continue
 
             dX = curMouseC[0] - lastMouseC[0]
             dY = curMouseC[1] - lastMouseC[1]
             dZ = curMouseC[2] - lastMouseC[2]
-
-
             lastMouseZ = curMouseC[2] # store current hand coordinate for case when no hand is seen
-
-            print("(Last, Cur, Diff) Mouse Z: (" + str(lastMouseC[2]) + ", " + str(curMouseC[2]) + ", " + str(dZ) + ")")
+            #print("(Last, Cur, Diff) Mouse Z: (" + str(lastMouseC[2]) + ", " + str(curMouseC[2]) + ", " + str(dZ) + ")")
             if (dZ > globals.zMoveDownThr):
-                print("Mouse moving down at: " + str(curMouseCTime) + " Z: ", str(curMouseC[2]) + " dZ: " + str(dZ))
+                #print("Mouse moving down at: " + str(curMouseCTime) + " Z: ", str(curMouseC[2]) + " dZ: " + str(dZ))
                 if (zChangeState == 0):
                     zChangeState = 1
                     zMoveStartTime = lastMouseCTime
                     zMoveDownStart = lastMouseC[2]
-                    print("Click down started at: " + str(zMoveStartTime) + " start Z: " + str(zMoveDownStart))
-                    zMoveEndTime = zMoveStartTime + 0.00001
+                    zMoveEndTime = zMoveStartTime + globals.smallDelta;
+                    #print("Click down started at: " + str(zMoveStartTime) + " start Z: " + str(zMoveDownStart))
                 else:
                    # It is moving down, record last coordintates
                    zMoveDownEnd = curMouseC[2]
                    zMoveEndTime = curMouseCTime
+                   #print("Click down continues at: " + str(zMoveEndTime) + " End Z: " + str(zMoveDownEnd))
             else:
                 if(zChangeState > 0):
                     # It was moving, but stopped now, this is a possible click
                     downZMove = True
-                    print("click down ended at: " + str(zMoveEndTime) + " end Z: " + str(zMoveDownEnd))
+                    #print("click down ended at: " + str(zMoveEndTime) + " End Z: " + str(zMoveDownEnd))
+                    #print("click down end detected at: " + str(curMouseCTime) + " Z: " + str(curMouseC[2]))
                 # Reset and tracking of downward movement
                 zChangeState = 0
 
@@ -86,11 +85,10 @@ def smoothMove(mouseCoords, options):
                 downZMove = False
                 clickZDistance = zMoveDownEnd - zMoveDownStart
                 clickZTime = zMoveEndTime - zMoveStartTime
-                clickZRate = clickZDistance / clickZTime
-                print ("Check. d: " + str(clickZDistance) + " t: " + str(clickZTime))
+                #print ("Check. distance: " + str(clickZDistance) + " duration: " + str(clickZTime))
                 if((clickZDistance > globals.clickZThr) and (clickZTime < globals.clickZTimeThr)):
                     pyautogui.click()
-                    print ("Clicked. d: " + str(clickZDistance) + " t: " + str(clickZTime))
+                    print ("Clicked. distance: " + str(clickZDistance) + " duration: " + str(clickZTime))
 
             lastMouseC = curMouseC
             lastMouseCTime = curMouseCTime
