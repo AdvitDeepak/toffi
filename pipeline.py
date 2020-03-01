@@ -20,6 +20,8 @@ def getBackground(frames, options):
         max = backArr.max()
         time.sleep(0.05)
 
+    backgroundZValue = np.average(backArr)
+
     backArr = (255.0 / max * (backArr - backArr.min())).astype(np.uint8)
     img = Image.fromarray(backArr)
     img.save("images/00_background.BMP")
@@ -34,7 +36,7 @@ def getBackground(frames, options):
     print("1")
     print()
 
-    return backArr
+    return backArr, backgroundZValue
 
 def pipeline(arr, backArrM, debug, ct):
 
@@ -206,7 +208,8 @@ def pipeline(arr, backArrM, debug, ct):
 
 def procPip(frames, mouseCoords, options):
     globals.initialize()
-    backArr = getBackground(frames, options)
+    backArr, backgroundZValue = getBackground(frames, options)
+    mouseCoords.put(backgroundZValue, True, 1)
     ct = 0
     lclCt = 0
     t_end = time.time() + options.seconds

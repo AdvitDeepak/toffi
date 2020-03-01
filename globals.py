@@ -33,6 +33,24 @@ def initialize():
     global mouseUpdateRate
     mouseUpdateRate = 0
 
+    global clickXThr
+    clickXThr = xM * 5
+
+    global clickYThr
+    clickYThr = yM * 5
+
+    global zNoiseThr
+    zNoiseThr = 0.05
+
+    global zMoveDownThr
+    zMoveDownThr = 0.01 # meters
+
+    global clickZThr
+    clickZThr = 0.04 # meters
+
+    global clickZTimeThr
+    clickZTimeThr = 0.2 # seconds
+
     # Any duration less than this is rounded to 0.0 to instantly move the mouse.
     pyautogui.MINIMUM_DURATION = 0.05  # Default: 0.1
     # Minimal number of seconds to sleep between mouse moves.

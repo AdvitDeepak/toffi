@@ -8,96 +8,95 @@ import pyautogui
 def smoothMove(mouseCoords, options):
     globals.initialize()
     mouseCt = 0
+    # 0: not moving down, 1: started to move down or moving down
+    zChangeState = 0
+    zMoveDownStart = 0
+    zMoveDownEnd = 0
+    zMoveStartTime = 0
+    zMoveEndTime = 0
+    curMouseCTime = 0
+    lastMouseCTime = 0
+    downZMove = False
+    backgroundZValue = mouseCoords.get(True, options.seconds)
+    print("background:", backgroundZValue)
 
     t_start = time.time()
     t_end = time.time() + options.seconds
-    lastToLastC = mouseCoords.get(True, options.seconds)
-    z = 0
-    cZ = 0
-    clickTimeout = False
-    clickTime = time.time()
-    lastDist = 0
-    distDec = 0
-    lastDiff = 0
+    lastMouseCTime = time.time()
+    (x, y, z, cx, cy, cz) = mouseCoords.get(True, options.seconds)
+    lastMouseC = (x, y, 1, cx, cy, cz)
+    cursor = 0
+    centerMouseZ = 1
+    lastMouseZ = 1
+
 
     while time.time() < t_end:
         try:
-            lastC = mouseCoords.get(True, options.seconds)
+            curMouseCTime = time.time()
+            curMouseC = mouseCoords.get(True, options.seconds)
             #continue
         except queue.Empty:
             # this will be thrown when the timeout is hit
             #break
+            print ("queue empty")
             continue
         else:
             # mouse
-            if (time.time() - clickTime > .8): clickTimeout = False
-            currX, currY = pyautogui.position()
-            if lastC == (-1,-1,-1,-1,-1,-1):
-                lastToLastC = (currX,currY,z,currX,currY,cZ)
+
+            cursorX, cursorY = pyautogui.position()
+            if curMouseC == (-1,-1,-1,-1,-1,-1):
+                # No hand detected, set coordinate to current cursor position, use last mouse Z for depth
+                lastMouseC = (cursorX, cursorY, lastMouseZ, cursorX, cursorY, centerMouseZ)
                 continue
 
-            z = lastC[2]
-            cZ = lastC[5]
-            """
-            print(z)
-            if z - lastToLastC[2] > 0.
-            """
-            """
-            dist = abs(lastC[0] - lastC[3]) + abs(lastC[1] - lastC[4])
-            print("dist: " + str(dist) + " | lastDist: " + str(lastDist) + " | delta: " + str(dist - lastDist))
-            """
-            """
-            dZ = round(lastC[2] - lastToLastC[2], 3)
+            print("Z: ", curMouseC[2])
 
-            diff = round(z - cZ, 3)
-            print(diff - lastDiff)
-            #print(dZ)
-            #print("dZ: " + str(dZ) +  " | dC: " + str(round(z - cZ, 3)))
-            """
-            """
-            if (dZ > globals.clickTh):
-                pyautogui.click()
-                continue
+            if(curMouseC[2] == 0 or (backgroundZValue - curMouseC[2]) < globals.zNoiseThr ): # For black spots, skip
+               continue
+
+            dX = curMouseC[0] - lastMouseC[0]
+            dY = curMouseC[1] - lastMouseC[1]
+            dZ = curMouseC[2] - lastMouseC[2]
 
 
-            if round(z - cZ, 3) < 0.1 and not clickTimeout:
-                print("we wanna click!")
-                #distDec = 0
-                clickTime = time.time()
-                clickTimeout = True
-                #pyautogui.click()
-                continue
-            """
-            #zDiff = round((lastC[2] - lastC[3]) - (lastToLastC[2] - lastToLastC[3]), 3)
-            #dist = (lastC[0] - lastC[3]) + (lastC[1] - lastC[4]) - (lastToLastC[0] - lastToLastC[3]) - (lastToLastC[1] - lastToLastC[4])
-            #print("dz: " + str(dZ) + " | zDiff: " + str(zDiff))
-            #print("delta dist: ", dist)
-            """
+            lastMouseZ = curMouseC[2] # store current hand coordinate for case when no hand is seen
 
-            if distDec > 2 and not clickTimeout:
-                #print("we wanna click!")
-                distDec = 0
-                clickTime = time.time()
-                clickTimeout = True
-                pyautogui.click()
-                continue
+            print("(Last, Cur, Diff) Mouse Z: (" + str(lastMouseC[2]) + ", " + str(curMouseC[2]) + ", " + str(dZ) + ")")
+            if (dZ > globals.zMoveDownThr):
+                print("Mouse moving down at: " + str(curMouseCTime) + " Z: ", str(curMouseC[2]) + " dZ: " + str(dZ))
+                if (zChangeState == 0):
+                    zChangeState = 1
+                    zMoveStartTime = lastMouseCTime
+                    zMoveDownStart = lastMouseC[2]
+                    print("Click down started at: " + str(zMoveStartTime) + " start Z: " + str(zMoveDownStart))
+                    zMoveEndTime = zMoveStartTime + 0.00001
+                else:
+                   # It is moving down, record last coordintates
+                   zMoveDownEnd = curMouseC[2]
+                   zMoveEndTime = curMouseCTime
+            else:
+                if(zChangeState > 0):
+                    # It was moving, but stopped now, this is a possible click
+                    downZMove = True
+                    print("click down ended at: " + str(zMoveEndTime) + " end Z: " + str(zMoveDownEnd))
+                # Reset and tracking of downward movement
+                zChangeState = 0
 
-            if (dist - lastDist < -70):
-                #print(" incremented distDec")
-                distDec += 1
-                continue
-            """
+            if(downZMove == True):
+                downZMove = False
+                clickZDistance = zMoveDownEnd - zMoveDownStart
+                clickZTime = zMoveEndTime - zMoveStartTime
+                clickZRate = clickZDistance / clickZTime
+                print ("Check. d: " + str(clickZDistance) + " t: " + str(clickZTime))
+                if((clickZDistance > globals.clickZThr) and (clickZTime < globals.clickZTimeThr)):
+                    pyautogui.click()
+                    print ("Clicked. d: " + str(clickZDistance) + " t: " + str(clickZTime))
+
+            lastMouseC = curMouseC
+            lastMouseCTime = curMouseCTime
 
             # Mouse move
-            dX = lastC[0] - lastToLastC[0]
-            dY = lastC[1] - lastToLastC[1]
-
             if (abs(dX) > globals.dXMax or abs(dY) > globals.dYMax): continue
             if (abs(dX) < globals.dXMin or abs(dY) < globals.dYMin): continue
-            pyautogui.move((lastC[0] - currX)/2, (lastC[1] - currY)/2)
-
+            pyautogui.move((curMouseC[0] - cursorX)/2, (curMouseC[1] - cursorY)/2)
             #print("dx:" + str(dX) + " dy:" + str(dY) + " dz:" + str(dZ))
-            lastToLastC = lastC
-
-            if (time.time() - t_start < globals.mouseUpdateRate):
-                time.sleep(globals.mouseUpdateRate - (time.time() - t_start))
