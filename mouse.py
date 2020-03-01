@@ -89,6 +89,7 @@ def smoothMove(mouseCoords, options):
                 if((clickZDistance > globals.clickZThr) and (clickZTime < globals.clickZTimeThr)):
                     pyautogui.click()
                     print ("Clicked. distance: " + str(clickZDistance) + " duration: " + str(clickZTime))
+                    continue
 
             lastMouseC = curMouseC
             lastMouseCTime = curMouseCTime

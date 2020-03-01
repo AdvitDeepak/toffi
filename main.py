@@ -59,8 +59,8 @@ def main ():
     cam = opener.open_camera ()
     #cam.setUseCase("MODE_5_45FPS_500")
     #cam.setUseCase("MODE_9_5FPS_2000")
-    cam.setUseCase("MODE_9_25FPS_450")
-    #cam.setUseCase("MODE_9_15FPS_700")
+    #cam.setUseCase("MODE_9_25FPS_450")
+    cam.setUseCase("MODE_9_15FPS_700")
 
     print("isConnected", cam.isConnected())
     print("getFrameRate", cam.getFrameRate())
