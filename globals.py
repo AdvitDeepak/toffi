@@ -45,13 +45,13 @@ def initialize():
     zNoiseThr = 0.05
 
     global zMoveDownThr
-    zMoveDownThr = 0.01 # meters
+    zMoveDownThr = 0.005 # meters
 
     global clickZThr
-    clickZThr = 0.06 # meters
+    clickZThr = 0.03 # meters
 
-    global clickZTimeThr
-    clickZTimeThr = 0.1 # seconds
+    global clickZFrameThr
+    clickZFrameThr = 3 # frames
 
     # Any duration less than this is rounded to 0.0 to instantly move the mouse.
     pyautogui.MINIMUM_DURATION = 0.05  # Default: 0.1

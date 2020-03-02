@@ -38,8 +38,9 @@ def getBackground(frames, options):
 
     return backArr, backgroundZValue
 
-def pipeline(arr, backArrM, debug, ct):
+def pipeline(arr, backArrM, backVal, debug, ct, xM, yM):
 
+    #print(arr, backArrM, backVal, debug, ct, xM, yM)
     start = time.time()
     arrM = arr.copy()
     arrMax = arr.max()
@@ -133,11 +134,11 @@ def pipeline(arr, backArrM, debug, ct):
     if abs(arrMax - cZ) < 0.1: return None
 
     corners = cv2.goodFeaturesToTrack(im,8,0.01,10)
-    corners = np.int0(corners)
 
     if corners is None: return None
     if (len(corners) == 0): return None
 
+    corners = np.int0(corners)
     #print(" found corners")
 
     if (debug):
@@ -183,13 +184,13 @@ def pipeline(arr, backArrM, debug, ct):
     x, y = highestCorner.ravel()
     #print("x: " + str(x) + "y: " + str(y))
     z = round(arr[y][x], 3)
-    if (z <= 0.001):
+    if (z <= 0.001 or z >= backVal ):
         z = round(arr[y+1][x], 3)
-        if (z <= 0.001):
+        if (z <= 0.001 or z >= backVal):
             z = round(arr[y-1][x], 3)
-            if (z <= 0.001):
+            if (z <= 0.001 or z >= backVal):
                 z = round(arr[y][x+1], 3)
-                if (z <= 0.001):
+                if (z <= 0.001 or z >= backVal):
                     z = round(arr[y][x-1], 3)
 
     #print("       found x,y,z: ", (time.time() - curTime))
@@ -204,37 +205,95 @@ def pipeline(arr, backArrM, debug, ct):
     #print("we wanted to move")
 
     #print("x: " + str(x) + " y: " + str(y))
-    return (int(x * globals.xM), int(y * globals.yM), z, int(cX * globals.xM), int(cY * globals.yM), cZ)
+    #return (int(x * globals.xM), int(y * globals.yM), z, int(cX * globals.xM), int(cY * globals.yM), cZ)
+    return (int(x * xM), int(y * yM), z)
 
 def procPip(frames, mouseCoords, options):
+    pPool = multiprocessing.Pool(2)
     globals.initialize()
     backArr, backgroundZValue = getBackground(frames, options)
-    mouseCoords.put(backgroundZValue, True, 1)
+
+    zChangeState = 0
+    zMoveDownStart = 0
+    zMoveDownEnd = 0
+
+    lastMouseC = (0,0,False)
+
     ct = 0
-    lclCt = 0
     t_end = time.time() + options.seconds
     while time.time() < t_end:
         try:
             # try to retrieve an item from the queue.
             # this will block until an item can be retrieved
             # or the timeout of 1 second is hit
-            item = frames.get(True, 1)
+            #item = frames.get(True, 1)
+            item1 = frames.get(True, 1)
+            item2 = frames.get(True, 1)
+            #item3 = frames.get(True, 1)
+            #item4 = frames.get(True, 1)
             #print("Proc: ", np.average(item))
         except queue.Empty:
             # this will be thrown when the timeout is hit
             break
         else:
-            if (lclCt == globals.sampleRate):
-                #stTime = time.time()
-                val = pipeline(item, backArr, options.debug, ct)
-                #print("Pip time: ", (time.time() - stTime))
-                lclCt = 0
-                if val is not None:
-                    mouseCoords.put(val)
-                else:
-                    mouseCoords.put((-1,-1,-1,-1, -1, -1))
-                #print("c: " + str(ct) + " we added coords" + str(val))
-                #print(mouseCoords.qsize())
-            ct += 1
-            lclCt += 1
-            #continue
+
+            #stTime = time.time()
+            #curMouseC = pipeline(item, backArr, backgroundZValue, options.debug, ct)
+            curMouseCArray = pPool.starmap(pipeline,
+                             [
+                              (item1, backArr, backgroundZValue, options.debug, ct, globals.xM, globals.yM)
+                              ,(item2, backArr, backgroundZValue, options.debug, ct + 1, globals.xM, globals.yM)
+                              #,(item3, backArr, backgroundZValue, options.debug, ct + 2, globals.xM, globals.yM),
+                              #,(item4, backArr, backgroundZValue, options.debug, ct + 3, globals.xM, globals.yM)
+                             ]
+                             )
+
+            #print("Pip time: ", (time.time() - stTime))
+            for curMouseC in curMouseCArray:
+
+                if curMouseC is not None:
+                    (x, y, z) = curMouseC
+                    click = False
+
+                    dX = curMouseC[0] - lastMouseC[0]
+                    dY = curMouseC[1] - lastMouseC[1]
+                    if (abs(dX) > globals.dXMax or abs(dY) > globals.dYMax or abs(dX) < globals.dXMin or abs(dY) < globals.dYMin):
+                        continue
+
+                    if(curMouseC[2] == 0) or (curMouseC[2] > backgroundZValue) or ((backgroundZValue - curMouseC[2]) < globals.zNoiseThr):
+                        #print("Put prematurely")
+                        mouseCoords.put((x,y,click))
+                        continue
+
+                    dZ = curMouseC[2] - lastMouseC[2]
+
+                    #print("(Last, Cur, Diff) Mouse Z: (" + str(lastMouseC[2]) + ", " + str(curMouseC[2]) + ", " + str(dZ) + ")")
+                    if (dZ > globals.zMoveDownThr):
+                        print("Mouse moving down. frames: " + str(zChangeState) + " Z: ", str(curMouseC[2]) + " dZ: " + str(dZ))
+                        if (zChangeState == 0):
+                            zChangeState = 1
+                            zMoveDownStart = lastMouseC[2]
+                            print("Click down started. frames: " + str(zChangeState) + " start Z: " + str(zMoveDownStart))
+                        else:
+                           # It is moving down, record last coordintates
+                           zChangeState += 1
+                           zMoveDownEnd = curMouseC[2]
+                           print("Click down continues at: " + str(zChangeState) + " End Z: " + str(zMoveDownEnd))
+                    else:
+                        if(zChangeState > 0):
+                            # It was moving, but stopped now, this is a possible click
+                            print ("Check. distance: " + str(zMoveDownEnd - zMoveDownStart) + " frames: " + str(zChangeState))
+                            if((zMoveDownEnd - zMoveDownStart > globals.clickZThr) and (zChangeState < globals.clickZFrameThr)):
+                                click = True
+                                print ("Clicked. distance: " + str(zMoveDownEnd - zMoveDownStart) + " frames: " + str(zChangeState))
+                                #continue
+                            #print("click down ended at: " + str(zMoveEndTime) + " End Z: " + str(zMoveDownEnd))
+                            #print("click down end detected at: " + str(curMouseCTime) + " Z: " + str(curMouseC[2]))
+                        # Reset and tracking of downward movement
+                        zChangeState = 0
+
+                    mouseCoords.put((x,y,click))
+                    #print("Time: " + str(time.time()) + " | x: " + str(x) + " | y: " + str(y) + " | click: " + str(click))
+                    lastMouseC = curMouseC
+
+            ct += 4
