@@ -29,8 +29,14 @@ def initialize():
     global wait
     wait = 0.05
 
+    global threadPoolSize
+    threadPoolSize = 2
+
     global sampleRate
     sampleRate = 1
+
+    global tmpDir
+    tmpDir = "image/"
 
     global mouseUpdateRate
     mouseUpdateRate = 0
@@ -45,13 +51,13 @@ def initialize():
     zNoiseThr = 0.05
 
     global zMoveDownThr
-    zMoveDownThr = 0.005 # meters
+    zMoveDownThr = 0.01 # meters
 
     global clickZThr
-    clickZThr = 0.03 # meters
+    clickZThr = 0.04 # meters
 
     global clickZFrameThr
-    clickZFrameThr = 3 # frames
+    clickZFrameThr = 4 # frames
 
     # Any duration less than this is rounded to 0.0 to instantly move the mouse.
     pyautogui.MINIMUM_DURATION = 0.05  # Default: 0.1
