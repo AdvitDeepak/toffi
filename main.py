@@ -57,10 +57,10 @@ def main ():
     options = parser.parse_args()
     opener = CameraOpener (options)
     cam = opener.open_camera ()
-    #cam.setUseCase("MODE_5_45FPS_500")
+    cam.setUseCase("MODE_5_45FPS_500")
     #cam.setUseCase("MODE_9_5FPS_2000")
     #cam.setUseCase("MODE_9_25FPS_450")
-    cam.setUseCase("MODE_9_15FPS_700")
+    #cam.setUseCase("MODE_9_15FPS_700")
 
     print("isConnected", cam.isConnected())
     print("getFrameRate", cam.getFrameRate())
@@ -95,14 +95,14 @@ def process_event_queue (q, painter, frames, seconds):
             # try to retrieve an item from the queue.
             # this will block until an item can be retrieved
             # or the timeout of 1 second is hit
-            item = q.get(True, 1)
+            item = q.get(True)
         except queue.Empty:
             # this will be thrown when the timeout is hit
             break
         else:
             #painter.paint (item)
             #print("Main ", np.average(item))
-            frames.put(item, True, seconds)
+            frames.put(item, True)
 
 if (__name__ == "__main__"):
     main()

@@ -17,8 +17,8 @@ def initialize():
 
     global dXMin
     global dYMin
-    dXMin = xM * 1
-    dYMin = yM * 1
+    dXMin = xM * 1.5
+    dYMin = yM * 1.5
 
     global smallDelta
     smallDelta = 0.00001
@@ -48,13 +48,13 @@ def initialize():
     clickYThr = yM * 5
 
     global zNoiseThr
-    zNoiseThr = 0.05
+    zNoiseThr = 0.08
 
     global zMoveDownThr
-    zMoveDownThr = 0.01 # meters
+    zMoveDownThr = 0.005 # meters
 
     global clickZThr
-    clickZThr = 0.04 # meters
+    clickZThr = 0.06 # meters
 
     global clickZFrameThr
     clickZFrameThr = 4 # frames

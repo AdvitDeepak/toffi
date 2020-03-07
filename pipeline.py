@@ -41,6 +41,7 @@ def getBackground(frames, options, tmpImageDir):
 
 def pipeline(tmpImageDir, arr, backArrM, backVal, debug, ct, xM, yM):
 
+    NoneTuple = (None, None, None)
     #print(arr, backArrM, backVal, debug, ct, xM, yM)
     start = time.time()
     arrM = arr.copy()
@@ -53,54 +54,31 @@ def pipeline(tmpImageDir, arr, backArrM, backVal, debug, ct, xM, yM):
         img = Image.fromarray(arrM)
         img.save(tmpImageDir + "00a_original.BMP")
 
-    item = arrM - backArrM
+    im = arrM - backArrM
+    #item = item.astype(np.uint8)
 
     #itemM = (255.0 / itemM.max() * (item - item.min())).astype(np.uint8)
 
     if (debug):
-        img = Image.fromarray(item)
+        img = Image.fromarray(im)
         img.save(tmpImageDir + "00b_subtracted.BMP")
 
-    avg = np.average(item)
-    if (avg < 15 or avg > 240):
-        #print("average not within range")
-        return None
-
+    avg = np.average(arrM)
+    if (avg < 10 or avg > 240):
+        #print("     average not within range")
+        return NoneTuple
     #print("     before forLoop: ", (time.time() - start))
     #curTime = time.time()
 
-    itemM = np.zeros((171,224))
-    #num255 = 0
+    im = (im >= 10) & (im <= avg)
+    im = 255 * im.astype(np.uint8)
 
-    for x in range(0, 170, 3): #171
-        for y in range(0, 221, 3): #224
-            val = item[x][y]
-            if (val >= 15 and val <= avg):
-                itemM[x][y] = 255
-                itemM[x][y+1] = 255
-                itemM[x+1][y] = 255
-                itemM[x+1][y+1] = 255
-
-                itemM[x][y+2] = 255
-                itemM[x+1][y+2] = 255
-                itemM[x+2][y+2] = 255
-                itemM[x+2][y+1] = 255
-                itemM[x+2][y] = 255
-
-            #else:
-            #    itemM[x][y] = 255
-                #num255 += 1
-
-    #print("     We did the forLoop: ", (time.time() - curTime))
+    #print("     We processed im: ", (time.time() - curTime))
     #curTime = time.time()
 
-    #if (num255 < 300): return None
-
-    im = itemM.astype(np.uint8)
     if (debug):
         img = Image.fromarray(im)
         img.save(tmpImageDir + "01_rescaled.BMP")
-
 
     #print(" subtracted")
     contours, hierarchy = cv2.findContours(im,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
@@ -110,12 +88,13 @@ def pipeline(tmpImageDir, arr, backArrM, backVal, debug, ct, xM, yM):
     for cnt in contours:
         val = cv2.arcLength(cnt, True) + cv2.contourArea(cnt)
         if (val > maxCnt and val < 20000):
+            #print("     ", val)
             maxCnt = val
             maxContour = cnt
 
     if (maxContour is None):
-        #print("maxContour is none")
-        return None
+        #print("     maxContour is none")
+        return NoneTuple
 
     bIm = np.zeros((171,224))
     hull = cv2.convexHull(maxContour)
@@ -126,10 +105,9 @@ def pipeline(tmpImageDir, arr, backArrM, backVal, debug, ct, xM, yM):
         cv2.drawContours(im,[hull],0,168,1)
         cv2.imwrite(tmpImageDir + "03_convexHull.BMP", im)
 
-    cv2.imwrite(tmpImageDir + "04_justHull.BMP", bIm)
-    im = cv2.imread(tmpImageDir + "04_justHull.BMP", 0)
+    im = bIM.astype(np.uint8)
 
-    #print("     found contours: ")
+    #print("     We found contours: ", (time.time() - curTime))
     #curTime = time.time()
     #print(" contours")
 
@@ -139,17 +117,17 @@ def pipeline(tmpImageDir, arr, backArrM, backVal, debug, ct, xM, yM):
     cY = int(M["m01"] / M["m00"])
     cZ = round(arr[cY][cX], 3)
     if abs(arrMax - cZ) < 0.1:
-        #print("abs less than 0.1")
-        return None
+        #print("     abs less than 0.1")
+        return NoneTuple
 
     corners = cv2.goodFeaturesToTrack(im,8,0.01,10)
 
     if corners is None:
-        #print("no corner")
-        return None
+        #print("     no corner")
+        return NoneTuple
     if (len(corners) == 0):
-        #print("corner length zero")
-        return None
+        #print("     corner length zero")
+        return NoneTuple
 
     corners = np.int0(corners)
     #print(" found corners")
@@ -189,30 +167,21 @@ def pipeline(tmpImageDir, arr, backArrM, backVal, debug, ct, xM, yM):
     #curTime = time.time()
 
     if not gotCorner:
-        #print("not gotCorner")
-        return None
+        #print("     not gotCorner")
+        return NoneTuple
 
     if (highestVal == -1000):
-        #print("highest value -1000")
-        return None
+        #print("     highest value -1000")
+        return NoneTuple
 
     #print(" highest corner")
-
     x, y = highestCorner.ravel()
     #print("x: " + str(x) + "y: " + str(y))
-    z = round(arr[y][x], 3)
-    if (z <= 0.001 or z >= backVal ):
-        z = round(arr[y+1][x], 3)
-        if (z <= 0.001 or z >= backVal):
-            z = round(arr[y-1][x], 3)
-            if (z <= 0.001 or z >= backVal):
-                z = round(arr[y][x+1], 3)
-                if (z <= 0.001 or z >= backVal):
-                    z = round(arr[y][x-1], 3)
-
+    zArea = arr[y:y+6,x-2:x+3].flatten()
+    zArea[zArea > backVal] = 0
+    z = max(zArea)
+    #print (zArea, z)
     #print("       found x,y,z: ", (time.time() - curTime))
-    #if (arr.max() - z < 0.1): return None
-
     if (debug):
         cv2.circle(im,(x,y),3,255,-1)
         img = Image.fromarray(im)
@@ -249,84 +218,95 @@ def procPip(frames, mouseCoords, options):
             print("Could not make dir: " + tmpImageDir[i])
 
 
-    pPool = multiprocessing.Pool(globals.threadPoolSize)
+    #pPool = multiprocessing.Pool(globals.threadPoolSize)
     backArr, backgroundZValue = getBackground(frames, options, globals.tmpDir)
+    backgroundZValue -= globals.zNoiseThr
 
     zChangeState = 0
     zMoveDownStart = 0
     zMoveDownEnd = 0
-    lastMouseC = (0,0,False)
+    zResetValue = backgroundZValue + 100
+    lx, ly, lz = (0, 0, zResetValue)
     ct = 0
 
     t_end = time.time() + options.seconds
     while time.time() < t_end:
-        listOfArgs = []
+        #listOfArgs = []
         try:
             # try to retrieve an item from the queue.
             # this will block until an item can be retrieved
             # or the timeout of 1 second is hit
-            item = frames.get(True, 1)
+            item = frames.get(True)
 
-            # for fId in range(globals.threadPoolSize):
-            #     item = frames.get(True, 1)
-            #     listOfArgs.append([tmpImageDir[fId], item, backArr, backgroundZValue, options.debug, ct+fId, globals.xM, globals.yM])
+            #for fId in range(globals.threadPoolSize):
+            #    item = frames.get(True, 1)
+            #    listOfArgs.append([tmpImageDir[fId], item, backArr, backgroundZValue, options.debug, ct+fId, globals.xM, globals.yM])
 
         except queue.Empty:
             # this will be thrown when the timeout is hit
             break
         else:
 
-            #stTime = time.time()
-            curMouseC = pipeline(globals.tmpDir, item, backArr, backgroundZValue, options.debug, ct, globals.xM, globals.yM)
+            stTime = time.time()
+            (x, y, z)  = pipeline(globals.tmpDir, item, backArr, backgroundZValue, options.debug, ct, globals.xM, globals.yM)
+            #print ("curMouseC, lastMouseC :", (x, y, z), (lx, ly, lz))
             #curMouseCArray = pPool.starmap(pipeline, listOfArgs)
             #print ("curMouseCArray :", curMouseCArray)
             #print("Pip time: ", (time.time() - stTime))
             #for curMouseC in curMouseCArray:
-            if curMouseC is not None:
-                (x, y, z) = curMouseC
-                click = False
-
-                dX = curMouseC[0] - lastMouseC[0]
-                dY = curMouseC[1] - lastMouseC[1]
+            if x is not None:
+                dX = x - lx
+                dY = y - ly
                 #print(dX, dY)
-                if (abs(dX) > globals.dXMax or abs(dY) > globals.dYMax or abs(dX) < globals.dXMin or abs(dY) < globals.dYMin):
+                if (abs(dX) > globals.dXMax or abs(dY) > globals.dYMax):
                     #print("dX and dY out of range")
                     continue
 
-                if(curMouseC[2] == 0) or (curMouseC[2] > backgroundZValue) or ((backgroundZValue - curMouseC[2]) < globals.zNoiseThr):
+                #if(curMouseC[2] == 0) or (curMouseC[2] > backgroundZValue) or ((backgroundZValue - curMouseC[2]) < globals.zNoiseThr):
+                if (z == 0) or (z > backgroundZValue) :
                     #print("Put prematurely")
-                    mouseCoords.put((x,y,click))
+                    if(abs(dX) > globals.dXMin and abs(dY) > globals.dYMin):
+                        mouseCoords.put((x,y,False))
+                    lx, ly = x, y
                     continue
 
-                dZ = curMouseC[2] - lastMouseC[2]
+                dZ = z - lz
 
-                #print("(Last, Cur, Diff) Mouse Z: (" + str(lastMouseC[2]) + ", " + str(curMouseC[2]) + ", " + str(dZ) + ")")
+                #print("(Last, Cur, Diff) Mouse Z: (" + str(lz) + ", " + str(curMouseC[2]) + ", " + str(dZ) + ")")
                 if (dZ > globals.zMoveDownThr):
-                    print("Mouse moving down. frames: " + str(zChangeState) + " Z: ", str(curMouseC[2]) + " dZ: " + str(dZ))
+                    #print("Mouse moving down. frames: " + str(zChangeState) + " Z: ", str(curMouseC[2]) + " dZ: " + str(dZ))
                     if (zChangeState == 0):
                         zChangeState = 1
-                        zMoveDownStart = lastMouseC[2]
-                        print("Click down started. frames: " + str(zChangeState) + " start Z: " + str(zMoveDownStart))
+                        zMoveDownStart = lz
+                        zMoveDownEnd = lz
+                        #print("Click down started. frames: " + str(zChangeState) + " start Z: " + str(zMoveDownStart))
+
                     else:
                        # It is moving down, record last coordintates
                        zChangeState += 1
-                       zMoveDownEnd = curMouseC[2]
-                       print("Click down continues at: " + str(zChangeState) + " End Z: " + str(zMoveDownEnd))
+                       zMoveDownEnd = z
 
+                       #print("Click down continues at: " + str(zChangeState) + " End Z: " + str(zMoveDownEnd))
+                    lz = z
+                    continue #Do not move mouse to make it feel stable
                 else:
                     if(zChangeState > 0):
                         # It was moving, but stopped now, this is a possible click
-                        print ("Check. distance: " + str(zMoveDownEnd - zMoveDownStart) + " frames: " + str(zChangeState))
+                        #print ("Check. distance: " + str(zMoveDownEnd - zMoveDownStart) + " frames: " + str(zChangeState))
                         if((zMoveDownEnd - zMoveDownStart > globals.clickZThr) and (zChangeState < globals.clickZFrameThr)):
-                            click = True
-                            print ("Clicked. distance: " + str(zMoveDownEnd - zMoveDownStart) + " frames: " + str(zChangeState))
+                            mouseCoords.put((lx,ly,True))
+                            #print ("Clicked. distance: " + str(zMoveDownEnd - zMoveDownStart) + " frames: " + str(zChangeState))
+                            zChangeState = 0
+                            lz = z
+                            continue
 
                     # Reset and tracking of downward movement
                     zChangeState = 0
+                    #if(abs(dX) > globals.dXMin and abs(dY) > globals.dYMin):
+                    mouseCoords.put((x,y,False))
 
-                mouseCoords.put((x,y,click))
+                lx, ly, lz = x, y, z
                 #print("Time: " + str(time.time()) + " | x: " + str(x) + " | y: " + str(y) + " | click: " + str(click))
-                lastMouseC = curMouseC
 
             #ct += globals.threadPoolSize
             ct += 1
