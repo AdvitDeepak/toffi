@@ -257,22 +257,9 @@ def procPip(frames, mouseCoords, options):
             if x is not None:
                 dX = x - lx
                 dY = y - ly
-                #print(dX, dY)
-                if (abs(dX) > globals.dXMax or abs(dY) > globals.dYMax):
-                    #print("dX and dY out of range")
-                    continue
-
-                #if(curMouseC[2] == 0) or (curMouseC[2] > backgroundZValue) or ((backgroundZValue - curMouseC[2]) < globals.zNoiseThr):
-                if (z == 0) or (z > backgroundZValue) :
-                    #print("Put prematurely")
-                    if(abs(dX) > globals.dXMin and abs(dY) > globals.dYMin):
-                        mouseCoords.put((x,y,False))
-                    lx, ly = x, y
-                    continue
-
                 dZ = z - lz
+                #print(dX, dY, dZ)
 
-                #print("(Last, Cur, Diff) Mouse Z: (" + str(lz) + ", " + str(curMouseC[2]) + ", " + str(dZ) + ")")
                 if (dZ > globals.zMoveDownThr):
                     #print("Mouse moving down. frames: " + str(zChangeState) + " Z: ", str(curMouseC[2]) + " dZ: " + str(dZ))
                     if (zChangeState == 0):
@@ -295,17 +282,28 @@ def procPip(frames, mouseCoords, options):
                         #print ("Check. distance: " + str(zMoveDownEnd - zMoveDownStart) + " frames: " + str(zChangeState))
                         if((zMoveDownEnd - zMoveDownStart > globals.clickZThr) and (zChangeState < globals.clickZFrameThr)):
                             mouseCoords.put((lx,ly,True))
-                            #print ("Clicked. distance: " + str(zMoveDownEnd - zMoveDownStart) + " frames: " + str(zChangeState))
+                            print ("Clicked. distance: " + str(zMoveDownEnd - zMoveDownStart) + " frames: " + str(zChangeState))
                             zChangeState = 0
                             lz = z
                             continue
 
-                    # Reset and tracking of downward movement
-                    zChangeState = 0
-                    #if(abs(dX) > globals.dXMin and abs(dY) > globals.dYMin):
-                    mouseCoords.put((x,y,False))
 
-                lx, ly, lz = x, y, z
+                # Reset and tracking of downward movement
+                zChangeState = 0
+
+                # ignore jitter and out of range
+                if (abs(dX) < globals.dXMin or abs(dY) < globals.dYMin or abs(dX) > globals.dXMax or abs(dY) > globals.dYMax):
+                    #print("dX and dY out of range or jittering")
+                    continue
+
+                #if(curMouseC[2] == 0) or (curMouseC[2] > backgroundZValue) or ((backgroundZValue - curMouseC[2]) < globals.zNoiseThr):
+                if (z == 0) or (z > backgroundZValue) :
+                    #print("Put prematurely")
+                    lx, ly = x, y
+                else:
+                    lx, ly, lz = x, y, z
+
+                mouseCoords.put((x,y,False))
                 #print("Time: " + str(time.time()) + " | x: " + str(x) + " | y: " + str(y) + " | click: " + str(click))
 
             #ct += globals.threadPoolSize
