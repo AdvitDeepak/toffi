@@ -54,7 +54,7 @@ def initialize():
     zMoveDownThr = 0.005 # meters
 
     global clickZThr
-    clickZThr = 0.06 # meters
+    clickZThr = 0.03 # meters
 
     global clickZFrameThr
     clickZFrameThr = 4 # frames

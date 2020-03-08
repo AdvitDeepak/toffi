@@ -244,7 +244,8 @@ def procPip(frames, mouseCoords, options):
 
         except queue.Empty:
             # this will be thrown when the timeout is hit
-            break
+            print("pipeline except")
+            continue
         else:
 
             stTime = time.time()
@@ -281,7 +282,7 @@ def procPip(frames, mouseCoords, options):
                         # It was moving, but stopped now, this is a possible click
                         #print ("Check. distance: " + str(zMoveDownEnd - zMoveDownStart) + " frames: " + str(zChangeState))
                         if((zMoveDownEnd - zMoveDownStart > globals.clickZThr) and (zChangeState < globals.clickZFrameThr)):
-                            mouseCoords.put((lx,ly,True))
+                            mouseCoords.put((x,y,True))
                             print ("Clicked. distance: " + str(zMoveDownEnd - zMoveDownStart) + " frames: " + str(zChangeState))
                             zChangeState = 0
                             lz = z

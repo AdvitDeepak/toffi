@@ -52,7 +52,7 @@ def main ():
     platformhelper = PlatformHelper()
     parser = argparse.ArgumentParser (usage = __doc__)
     add_camera_opener_options (parser)
-    parser.add_argument ("--seconds", type=int, default=60, help="duration to capture data")
+    parser.add_argument ("--seconds", type=int, default=600, help="duration to capture data")
     parser.add_argument ("--debug", type=bool, default=False, help="save intermediate images")
     options = parser.parse_args()
     opener = CameraOpener (options)
@@ -98,7 +98,8 @@ def process_event_queue (q, painter, frames, seconds):
             item = q.get(True)
         except queue.Empty:
             # this will be thrown when the timeout is hit
-            break
+            #print("cam empty")
+            continue
         else:
             #painter.paint (item)
             #print("Main ", np.average(item))

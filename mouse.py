@@ -24,7 +24,7 @@ def smoothMove(mouseCoords, options):
         except queue.Empty:
             # this will be thrown when the timeout is hit
             #break
-            #print ("queue empty")
+            print ("mouse except")
             continue
         else:
             # mouse
