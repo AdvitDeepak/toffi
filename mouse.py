@@ -10,7 +10,6 @@ def smoothMove(mouseCoords, options):
     mouseCt = 0
     # 0: not moving down, 1: started to move down or moving down
 
-
     t_start = time.time()
     t_end = time.time() + options.seconds
     lastMouseCTime = time.time()
@@ -20,10 +19,8 @@ def smoothMove(mouseCoords, options):
         try:
             curMouseCTime = time.time()
             curMouseC = mouseCoords.get(True, options.seconds)
-            #continue
         except queue.Empty:
             # this will be thrown when the timeout is hit
-            #break
             print ("mouse except")
             continue
         else:
@@ -34,9 +31,5 @@ def smoothMove(mouseCoords, options):
 
             cursorX, cursorY = pyautogui.position()
 
-            #print("Z: ", curMouseC[2])
-            # For black spots, or setecting far off back ground object, skip
-
             # Mouse move
             pyautogui.move((curMouseC[0] - cursorX)/2, (curMouseC[1] - cursorY)/2)
-            #print("dx:" + str(dX) + " dy:" + str(dY) + " dz:" + str(dZ))
