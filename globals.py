@@ -17,8 +17,8 @@ def initialize():
 
     global dXMin
     global dYMin
-    dXMin = xM * 1.5
-    dYMin = yM * 1.5
+    dXMin = xM * 0.5
+    dYMin = yM * 0.3
 
     global smallDelta
     smallDelta = 0.00001

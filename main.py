@@ -1,3 +1,12 @@
+#!/usr/bin/python3
+
+# Copyright (C) 2017 Infineon Technologies & pmdtechnologies ag
+#
+# THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
+# KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+# PARTICULAR PURPOSE.
+
 import argparse
 from roypy_utils import roypy
 import time
@@ -25,6 +34,20 @@ class MyListener(roypy.IDepthDataListener):
         p = zarray.reshape (-1, data.width)
         self.queue.put(p)
 
+    def paint (self, data):
+        """Called in the main thread, with data containing one of the items that was added to the
+        queue in onNewData.
+        """
+        # create a figure and show the raw data
+        plt.figure(1)
+        plt.imshow(data)
+
+        plt.show(block = False)
+        plt.draw()
+        # this pause is needed to ensure the drawing for
+        # some backends
+        plt.pause(0.001)
+
 def main ():
     platformhelper = PlatformHelper()
     parser = argparse.ArgumentParser (usage = __doc__)
@@ -35,6 +58,9 @@ def main ():
     opener = CameraOpener (options)
     cam = opener.open_camera ()
     cam.setUseCase("MODE_5_45FPS_500")
+    #cam.setUseCase("MODE_9_5FPS_2000")
+    #cam.setUseCase("MODE_9_25FPS_450")
+    #cam.setUseCase("MODE_9_15FPS_700")
 
     print("isConnected", cam.isConnected())
     print("getFrameRate", cam.getFrameRate())
@@ -49,6 +75,7 @@ def main ():
 
     pMouse.start()
     pPipeline.start()
+
 
     # we will use this queue to synchronize the callback with the main
     # thread, as drawing should happen in the main thread
@@ -71,8 +98,11 @@ def process_event_queue (q, painter, frames, seconds):
             item = q.get(True)
         except queue.Empty:
             # this will be thrown when the timeout is hit
+            #print("cam empty")
             continue
         else:
+            #painter.paint (item)
+            #print("Main ", np.average(item))
             frames.put(item, True)
 
 if (__name__ == "__main__"):
