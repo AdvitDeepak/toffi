@@ -251,6 +251,7 @@ def procPip(frames, mouseCoords, options):
 
             # stTime = time.time()
             (x, y, z)  = pipeline(globals.tmpDir, item, backArr, backgroundZValue, options.debug, ct, globals.xM, globals.yM)
+            currX, currY = pyautogui.position()
             #print ("curMouseC, lastMouseC :", (x, y, z), (lx, ly, lz))
             #curMouseCArray = pPool.starmap(pipeline, listOfArgs)
             #print ("curMouseCArray :", curMouseCArray)
@@ -282,7 +283,8 @@ def procPip(frames, mouseCoords, options):
                 # Mouse is not moving down now but had moved right before by click threshold
                 print ("Clicked. distance: " + str(zMoveDiff))
                 mouseCoords.put((lx,ly,True)) # Use lx, ly to keep mouse where click was started
-                lx, ly, lz = x, y, z # update to new location to keep subsequent movement smooth
+                #lx, ly, lz = x, y, z # update to new location to keep subsequent movement smooth
+                lx, ly, lz = currX, currY, z
                 # Reset and tracking of downward movement
                 zMoveDownEnd = zMoveDownStart
                 continue
@@ -300,9 +302,11 @@ def procPip(frames, mouseCoords, options):
             if (z == 0) or (z > backgroundZValue) :
                 #print("Put prematurely")
                 # do not update z
-                lx, ly = x, y
+                #lx, ly = x, y
+                lx, ly = currX, currY
             else:
-                lx, ly, lz = x, y, z
+                #lx, ly, lz = x, y, z
+                lx, ly, lz = currX, currY, z
             # no click, just move mouse
             #print("x:" + str(x) + "y: " + str(y))
             mouseCoords.put((x,y,False))
